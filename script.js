@@ -1,4 +1,7 @@
-//funzione per rimuovere tutti i libri dal carrello
+// Dichiarazione di variabili globali
+const cardSection = document.getElementById('card-section');
+const cartList = document.getElementById('cart-list');
+const noResultsMessage = document.getElementById('no-results-message');
 
 function deleteCart() {
   let cartList = document.getElementById("cart-list");
@@ -36,56 +39,62 @@ function updateTotalPrice() {
   cartInfoTitle.innerText = "Prezzo totale: " + totalPrice.toFixed(2);
 }
 
+// Funzione per ottenere i libri dalla API
+const fetchBooks = async () => {
+  try {
+    const response = await fetch('https://striveschool-api.herokuapp.com/books');
+    if (response.ok) {
+      const books = await response.json();
+      if (books.length > 0) {
+        noResultsMessage.style.display = 'none';
+        renderBooks(books);
+      } else {
+        noResultsMessage.style.display = 'block';
+      }
+    } else {
+      console.error('Si è verificato un errore nella risposta della API');
+    }
+  } catch (error) {
+    console.error('Si è verificato un errore durante la richiesta dei libri:', error);
+  }
+};
 
-// fetch per inserire tutti libri in pagina
+// Funzione per rendere visibili le informazioni dei libri nella pagina index.html
+const renderBooks = (books) => {
+  cardSection.innerHTML = '';
 
-window.onload = () => {
-  fetchBooks()
-}
+  books.forEach(book => {
+    const card = document.createElement('div');
+    card.classList.add('card', 'm-3', 'p-2');
+    card.style.width = '18rem';
 
-const endPointUrl = "https://striveschool-api.herokuapp.com/books";
+    const image = document.createElement('img');
+    image.src = book.img;
+    image.classList.add('card-img-top');
+    image.alt = book.title;
 
-const fetchBooks = () => {
-  fetch(endPointUrl)
-  .then(response => response.json())
-  .then(data => {
-    let myArray = data;
-    let cardSection = document.getElementById("card-section");
-    cardSection.innerHTML = ""; 
-    //istruzione per ciclare gli elementi dell'array e prendere i valori necessari per costruire la card di ogni libro
-    myArray.forEach((item) => {
-        let myCategory = item.category;
-        let myTitle = item.title;
-        let myPrice = item.price;
-        let myImg = item.img;
-        let card = document.createElement("div");
-        card.classList.add("card");
-        card.style.width = "18rem";
-        card.style.marginTop = "20px";
-        card.style.marginBottom = "20px";
-        let image = document.createElement("img");
-        image.classList.add("card-img-top");
-        image.src = myImg;
-        image.alt = "Card image cap";
-        card.appendChild(image);
-        let cardBody = document.createElement("div");
-        cardBody.classList.add("card-body");
-        cardBody.textContent = "Category: " + myCategory + "Price: " + myPrice ;
-        let cardTitle = document.createElement("h5");
-        cardTitle.classList.add("card-title");
-        cardTitle.textContent = myTitle;
-        let addButton = document.createElement("button");
-        addButton.classList.add("btn", "btn-success");
-        addButton.textContent = "Aggiungi al carrello";
-        addButton.style.marginTop = ("2px");
-        addButton.style.marginBottom = ("2px");
-        //istruzioni per aggiungere un listener di tipo click al bottone per aggiungere al carrello
-        addButton.addEventListener("click", () =>{
-            card.style.borderColor = "red";
+    const cardBody = document.createElement('div');
+    cardBody.classList.add('card-body');
+
+    const title = document.createElement('h5');
+    title.textContent = book.title;
+    title.classList.add('card-title');
+
+    const price = document.createElement('p');
+    price.textContent = `Prezzo: ${book.price}`;
+    price.classList.add('card-text');
+
+    const id = book.asin;
+
+    const addButton = document.createElement('button');
+    addButton.textContent = 'Aggiungi al carrello';
+    addButton.classList.add('btn', 'btn-success');
+    addButton.addEventListener("click", () =>{
+      card.style.borderColor = "red";
             //istruzioni per aggiungere le info del libro come li alla ol
             let cartList = document.getElementById("cart-list");
             let newLi = document.createElement("li");
-            newLi.innerText = "Titolo: " + myTitle + "Prezzo: " + myPrice;
+            newLi.innerText = "Titolo: " + book.title + "Prezzo: " + book.price;
             cartList.appendChild(newLi);
             //creazione del bottone per rimuovere ogni li
             let deleteButton = document.createElement("button");
@@ -95,7 +104,7 @@ const fetchBooks = () => {
             let cartInfoContainer = document.getElementById("cart-info-container");
             cartInfoContainer.classList.remove("d-none");
             //istruzioni per settare l'attributo price e usarlo nella funzione updatePrice
-            newLi.setAttribute("data-price", myPrice);
+            newLi.setAttribute("data-price", book.price);
             //creazione del lsitener sul bottone per rimuovere il li
             deleteButton.addEventListener("click", () => {
               newLi.remove();
@@ -108,9 +117,9 @@ const fetchBooks = () => {
             });
             //richiamo funzione per aggiornare il prezzo
             updateTotalPrice();
-        })
-        //creazione del bottone per nascondere la card
-        let hideButton = document.createElement("button");
+    })
+
+    let hideButton = document.createElement("button");
         hideButton.classList.add("btn", "btn-primary");
         hideButton.style.marginTop = ("2px");
         hideButton.style.marginBottom = ("2px");
@@ -119,19 +128,82 @@ const fetchBooks = () => {
         hideButton.addEventListener("click", () => {
           card.style.display = "none";
         })
-        cardTitle.appendChild(addButton);
-        cardTitle.appendChild(hideButton);
-        cardBody.appendChild(cardTitle);
-        card.appendChild(cardBody);
-        cardSection.appendChild(card);
-    });
-    
-  })
-  .catch(error => {
-    // Gestisci eventuali errori qui
-    console.error('Si è verificato un errore:', error);
+
+    const detailsButton = document.createElement('button');
+    detailsButton.textContent = 'Dettagli';
+    detailsButton.classList.add('btn', 'btn-secondary');
+    detailsButton.addEventListener("click", ()=>{
+      redirectToDetailsPage(id);
+    })
+
+    cardBody.appendChild(title);
+
+    cardBody.appendChild(price);
+    cardBody.appendChild(addButton);
+    cardBody.appendChild(hideButton);
+    cardBody.appendChild(detailsButton);
+
+    card.appendChild(image);
+    card.appendChild(cardBody);
+
+    cardSection.appendChild(card);
   });
-}
+};
+
+// Funzione per reindirizzare alla pagina dei dettagli con l'ID del libro come parametro
+
+const redirectToDetailsPage = (id) => {
+  window.location.href = `dettagli.html?id=${id}`;
+};
+
+// Funzione per ottenere i search params e visualizzare i dettagli del libro corrispondente
+const fetchBookDetails = async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const bookId = urlParams.get('id');
+
+  try {
+    const response = await fetch(`https://striveschool-api.herokuapp.com/books/` + bookId);
+    if (response.ok) {
+      const book = await response.json();
+      renderBookDetails(book);
+    } else {
+      console.error('Si è verificato un errore nella risposta della API');
+    }
+  } catch (error) {
+    console.error('Si è verificato un errore durante la richiesta dei dettagli del libro:', error);
+  }
+};
+
+// Funzione per rendere visibili i dettagli del libro nella pagina dettagli.html
+const renderBookDetails = (book) => {
+  const bookDetailsContainer = document.getElementById('book-details');
+  bookDetailsContainer.style.marginLeft = "20px";
+  bookDetailsContainer.style.marginTop = "20px";
+
+  const title = document.createElement('p');
+  title.textContent = "Titolo: " + book.title;
+
+  const category = document.createElement('p');
+  category.textContent = "Categoria: " + book.category;
+
+  const price = document.createElement('p');
+  price.textContent = "Prezzo: " + book.price;
+
+  const img = document.createElement("img");
+  img.src = book.img;
+  img.style.width = "150px";
+
+  let goBackButton = document.createElement("a");
+  goBackButton.classList.add("btn", "btn-info");
+  goBackButton.textContent = "Torna indietro";
+  goBackButton.href = "index.html";
+
+  bookDetailsContainer.appendChild(title);
+  bookDetailsContainer.appendChild(img);
+  bookDetailsContainer.appendChild(category);
+  bookDetailsContainer.appendChild(price);
+  bookDetailsContainer.appendChild(goBackButton);
+};
 
 //funzione per cercare i libri dalla barra di ricerca
 const searchBook = (event) => {
@@ -168,3 +240,13 @@ const searchBook = (event) => {
   }
 };
 
+// Funzione per avviare l'applicazione
+const startApp = () => {
+  if (window.location.pathname === '/dettagli.html') {
+    fetchBookDetails();
+  } else {
+    fetchBooks();
+  }
+};
+
+startApp();
