@@ -1,0 +1,16 @@
+*{
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+#cart-section{
+    border-left: solid 2px green;
+}
+
+#no-results-message{
+    display: none;
+    font-weight: bold;
+    text-align: center;
+    font-size: large;
+    
+}
